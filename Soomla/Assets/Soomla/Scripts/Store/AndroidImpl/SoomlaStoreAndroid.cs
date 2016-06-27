@@ -64,7 +64,13 @@ namespace Soomla.Store {
                     }
                 }
             }
-            
+			if (StoreSettings.BazaarBP && 
+			    	(string.IsNullOrEmpty(StoreSettings.BazaarPublicKey) ||
+			    	StoreSettings.BazaarPublicKey==StoreSettings.BAZAAR_PUB_KEY_DEFAULT)) {
+				SoomlaUtils.LogError(TAG, "SOOMLA/UNITY You chose Bazaar billing service but publicKey is not set!! Stopping here!!");
+				throw new ExitGUIException();
+			}
+
             AndroidJNI.PushLocalFrame(100);
 			using(AndroidJavaClass jniSoomlaStoreClass = new AndroidJavaClass("com.soomla.store.SoomlaStore")) {
 				jniSoomlaStore = jniSoomlaStoreClass.CallStatic<AndroidJavaObject>("getInstance");
@@ -143,6 +149,14 @@ namespace Soomla.Store {
                     jniGooglePlayIabServiceClass.SetStatic("AllowAndroidTestPurchases", StoreSettings.AndroidTestPurchases);
 				}
 
+			}
+			if (StoreSettings.BazaarBP) {
+				using(AndroidJavaClass jniBazaarIabServiceClass = new AndroidJavaClass("com.soomla.store.billing.bazaar.BazaarIabService")) {
+					AndroidJavaObject jniBazaarIabService = jniBazaarIabServiceClass.CallStatic<AndroidJavaObject>("getInstance");
+					jniBazaarIabService.Call("setPublicKey", StoreSettings.BazaarPublicKey);
+										
+					jniBazaarIabServiceClass.SetStatic("AllowAndroidTestPurchases", StoreSettings.BazaarTestPurchases);
+				}
 			}
 			AndroidJNI.PopLocalFrame(IntPtr.Zero);
 		}

@@ -38,10 +38,12 @@ namespace Soomla.Store
 		public void ClearManifest(){
 			RemoveGPlayBPFromManifest();
 			RemoveAmazonBPFromManifest ();
+            RemoveBazzarBPFromManifest();
 		}
 		public void UpdateManifest() {
 			HandleGPlayBPManifest ();
 			HandleAmazonBP ();
+            HandleBazaarBP();
 		}
 
 		public void HandleGPlayBPManifest(){
@@ -78,6 +80,18 @@ namespace Soomla.Store
 			}
 		}
 
+        public void HandleBazaarBP()
+        {
+            if (StoreSettings.BazaarBP)
+            {
+                AddBazaarBPToManifest();
+            }
+            else
+            {
+                RemoveBazzarBPFromManifest();
+            }
+        }
+
 		private void AddAmazonToManifest(){
 			XmlElement receiverElement = SoomlaManifestTools.AppendApplicationElement("receiver", "com.amazon.device.iap.ResponseReceiver", null);
 			receiverElement.InnerText = "\n    ";
@@ -95,6 +109,23 @@ namespace Soomla.Store
 			SoomlaManifestTools.RemoveApplicationElement("receiver", "com.amazon.device.iap.ResponseReceiver");
 		}
 
+		private void AddBazaarBPToManifest(){
+			SoomlaManifestTools.SetPermission("com.farsitel.bazaar.permission.PAY_THROUGH_BAZAAR");
+			SoomlaManifestTools.AddActivity("com.soomla.store.billing.bazaar.BazaarIabService$IabActivity",
+			                                new Dictionary<string, string>() { 
+				{"theme", "@android:style/Theme.Translucent.NoTitleBar.Fullscreen"} 
+			});
+			SoomlaManifestTools.AddMetaDataTag("billing.service", "bazaar.BazaarIabService");
+		}
+		
+		private void RemoveBazzarBPFromManifest(){
+			// removing BILLING permission
+			SoomlaManifestTools.RemovePermission("om.farsitel.bazaar.permission.PAY_THROUGH_BAZAAR");
+			// removing Iab Activity
+			SoomlaManifestTools.RemoveActivity("com.soomla.store.billing.bazaar.BazaarIabService$IabActivity");
+			
+			SoomlaManifestTools.RemoveApplicationElement("meta-data", "billing.service");
+		}
 
 #endif
 	}
